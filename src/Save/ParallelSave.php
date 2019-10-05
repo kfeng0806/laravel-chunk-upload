@@ -29,11 +29,6 @@ class ParallelSave extends ChunkSave
     protected $isFileValid;
 
     /**
-     * @var AbstractHandler|HandleParallelUploadTrait
-     */
-    private $handler;
-
-    /**
      * ParallelSave constructor.
      *
      * @param UploadedFile                              $file         the uploaded file (chunk file)
@@ -51,7 +46,6 @@ class ParallelSave extends ChunkSave
     ) {
         // Get current file validation - the file instance is changed
         $this->isFileValid = $file->isValid();
-        $this->handler = $handler;
 
         // Handle the file upload
         parent::__construct($file, $handler, $chunkStorage, $config);
@@ -104,6 +98,7 @@ class ParallelSave extends ChunkSave
      */
     protected function buildFullFileFromChunks()
     {
+        sleep(5);
         $checkCount = 0;
         $chunkFiles = $this->getSavedChunksFiles()->all();
 
@@ -111,13 +106,13 @@ class ParallelSave extends ChunkSave
             throw new MissingChunkFilesException();
         // https://github.com/pionl/laravel-chunk-upload/issues/57
         // Check until all chunks are uploaded before merge file
-        } elseif (count($chunkFiles) != $this->handler->getTotalChunks()) {
-            while (count($chunkFiles) === $this->handler->getTotalChunks()) {
+        } elseif (count($chunkFiles) != $this->handler()->getTotalChunks()) {
+            while (count($chunkFiles) === $this->handler()->getTotalChunks()) {
                 sleep(1);
                 $chunkFiles = $this->getSavedChunksFiles()->all();
                 $checkCount++;
 
-                if ($checkCount >= 10 && count($chunkFiles) != $this->handler->getTotalChunks()) {
+                if ($checkCount >= 10 && count($chunkFiles) != $this->handler()->getTotalChunks()) {
                     throw new MissingChunkFilesException('Missing some part of chunk files');
                 }
             }
